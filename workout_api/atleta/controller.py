@@ -1,6 +1,7 @@
 from datetime import datetime
 from uuid import uuid4
 from fastapi import APIRouter, Body, HTTPException, status
+from pydantic import UUID4
 from sqlalchemy.future import select
 from workout_api.atleta.schemas import AtletaIn, AtletaOut
 from workout_api.atleta.models import AtletaModel
@@ -44,3 +45,27 @@ async def post(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Ocorreu um erro ao inserir os dados no banco.")
     
     return atleta_out
+
+@router.get(
+    path='/',
+    summary='Consultar todos os atletas',
+    status_code=status.HTTP_200_OK,
+    response_model=list[AtletaOut],
+)
+async def query(db_session: DatabaseDependency,) -> list[AtletaOut]:
+    atletas: list[AtletaOut] = (await db_session.execute(select(AtletaModel))).scalars().all()
+    return [AtletaOut.model_validate(atleta) for atleta in atletas]
+
+@router.get(
+    path='/{id}',
+    summary='Consultar um atleta pelo id',
+    status_code=status.HTTP_200_OK,
+    response_model=AtletaOut,
+)
+async def query(id: UUID4, db_session: DatabaseDependency,) -> AtletaOut:
+    atleta: AtletaOut = (await db_session.execute(select(AtletaModel).filter_by(id=id))).scalars().first()
+    
+    if not atleta:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Atleta não encontrado pelo id: {id}")
+    
+    return atleta
