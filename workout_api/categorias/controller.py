@@ -17,5 +17,8 @@ async def post(
 ) -> CategoriaOut:
     categoria_out = CategoriaOut(id=uuid4(), **categoria_in.model_dump())
     categoria_model = CategoriaModel(**categoria_out.model_dump())
-    breakpoint()
-    pass
+    
+    db_session.add(categoria_model)
+    await db_session.commit()
+    
+    return categoria_out
