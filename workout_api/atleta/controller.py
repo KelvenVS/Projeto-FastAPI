@@ -3,7 +3,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Body, HTTPException, status
 from pydantic import UUID4
 from sqlalchemy.future import select
-from workout_api.atleta.schemas import AtletaIn, AtletaOut
+from workout_api.atleta.schemas import AtletaIn, AtletaOut, AtletaUpdate
 from workout_api.atleta.models import AtletaModel
 from workout_api.categorias.models import CategoriaModel
 from workout_api.centro_treinamento.models import CentroTreinamentoModel
@@ -69,3 +69,37 @@ async def query(id: UUID4, db_session: DatabaseDependency,) -> AtletaOut:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Atleta não encontrado pelo id: {id}")
     
     return atleta
+
+@router.patch(
+    path='/{id}',
+    summary='Editar um atleta pelo id',
+    status_code=status.HTTP_200_OK,
+    response_model=AtletaOut,
+)
+async def get(id: UUID4, db_session: DatabaseDependency, atleta_up: AtletaUpdate = Body(...),) -> AtletaOut:
+    atleta: AtletaOut = (await db_session.execute(select(AtletaModel).filter_by(id=id))).scalars().first()
+    
+    if not atleta:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Atleta não encontrado pelo id: {id}")
+    
+    atleta_update = atleta_up.model_dump(exclude_unset=True)
+    for key, value in atleta_update.items():
+        setattr(atleta, key, value)
+    
+    await db_session.commit()
+    await db_session.refresh(atleta)
+    return atleta
+
+@router.delete(
+    path='/{id}',
+    summary='Deletar um atleta pelo id',
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def get(id: UUID4, db_session: DatabaseDependency) -> None:
+    atleta: AtletaOut = (await db_session.execute(select(AtletaModel).filter_by(id=id))).scalars().first()
+    
+    if not atleta:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Atleta não encontrado pelo id: {id}")
+    
+    await db_session.delete(atleta)
+    await db_session.commit()
