@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import Optional
 from uuid import uuid4
-from fastapi import APIRouter, Body, HTTPException, status
+from fastapi import APIRouter, Body, Query, HTTPException, status
 from pydantic import UUID4
 from sqlalchemy.future import select
 from workout_api.atleta.schemas import AtletaIn, AtletaOut, AtletaUpdate
@@ -52,21 +53,51 @@ async def post(
     status_code=status.HTTP_200_OK,
     response_model=list[AtletaOut],
 )
-async def query(db_session: DatabaseDependency,) -> list[AtletaOut]:
+async def get_all_atleta(db_session: DatabaseDependency,) -> list[AtletaOut]:
     atletas: list[AtletaOut] = (await db_session.execute(select(AtletaModel))).scalars().all()
     return [AtletaOut.model_validate(atleta) for atleta in atletas]
 
 @router.get(
-    path='/{id}',
-    summary='Consultar um atleta pelo id',
+    path='/by_id_cpf_nome',
+    summary='Consultar um atleta pelo id, nome ou cpf',
     status_code=status.HTTP_200_OK,
     response_model=AtletaOut,
 )
-async def query(id: UUID4, db_session: DatabaseDependency,) -> AtletaOut:
-    atleta: AtletaOut = (await db_session.execute(select(AtletaModel).filter_by(id=id))).scalars().first()
+async def get_atleta_by_id_name_cpf(
+    db_session: DatabaseDependency,
+    id: Optional[UUID4] = Query(None, description="Filtrar pelo id do atleta"),
+    nome: Optional[str] = Query(None, description="Filtrar pelo nome do atleta"),
+    cpf: Optional[str] = Query(None, description="Filtrar pelo CPF do atleta"),
+) -> AtletaOut:
+    query = select(AtletaModel)
+    
+    if not id and not nome and not cpf:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"Nenhum filtro aplicado")
+    
+    filters_applied = []  # Lista para armazenar os filtros aplicados
+        
+    # Se o id foi fornecido, adiciona o filtro pelo id
+    if id:
+        query = query.filter(AtletaModel.id == id)
+        filters_applied.append(f"id = {id}")
+
+    # Se o nome foi fornecido, adiciona o filtro no nome
+    if nome:
+        query = query.filter(AtletaModel.nome.ilike(f"%{nome}%"))
+        filters_applied.append(f"nome = {nome}")
+        
+    # Se o CPF foi fornecido, adiciona o filtro no CPF
+    if cpf:
+        query = query.filter(AtletaModel.cpf == cpf)
+        filters_applied.append(f"cpf = {cpf}")
+
+    # Executando a consulta
+    result = await db_session.execute(query)
+    atleta = result.scalars().first() 
     
     if not atleta:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Atleta não encontrado pelo id: {id}")
+        filters_str = ", ".join(filters_applied)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Atleta não encontrado {filters_str}")
     
     return atleta
 
@@ -76,7 +107,7 @@ async def query(id: UUID4, db_session: DatabaseDependency,) -> AtletaOut:
     status_code=status.HTTP_200_OK,
     response_model=AtletaOut,
 )
-async def get(id: UUID4, db_session: DatabaseDependency, atleta_up: AtletaUpdate = Body(...),) -> AtletaOut:
+async def update_atleta(id: UUID4, db_session: DatabaseDependency, atleta_up: AtletaUpdate = Body(...),) -> AtletaOut:
     atleta: AtletaOut = (await db_session.execute(select(AtletaModel).filter_by(id=id))).scalars().first()
     
     if not atleta:
@@ -95,7 +126,7 @@ async def get(id: UUID4, db_session: DatabaseDependency, atleta_up: AtletaUpdate
     summary='Deletar um atleta pelo id',
     status_code=status.HTTP_204_NO_CONTENT,
 )
-async def get(id: UUID4, db_session: DatabaseDependency) -> None:
+async def delete_atleta(id: UUID4, db_session: DatabaseDependency) -> None:
     atleta: AtletaOut = (await db_session.execute(select(AtletaModel).filter_by(id=id))).scalars().first()
     
     if not atleta:
