@@ -54,22 +54,28 @@ make run
 ```
 e acesse: http://127.0.0.1:8000/docs
 
-# Desafio Final
-    - adicionar query parameters nos endpoints
-        - atleta
-            - nome
-            - cpf
-    - customizar response de retorno de endpoints
-        - get all
-            - atleta
-                - nome
-                - centro_treinamento
-                - categoria
+# Desafio Final - Progresso
+    - adicionar query parameters nos endpoints☑️
+        - atleta☑️
+            - nome☑️
+            - cpf☑️
+    - customizar response de retorno de endpoints⌚
+        - get all⌚
+            - atleta⌚
+                - nome⌚
+                - centro_treinamento⌚
+                - categoria⌚
     - Manipular exceção de integridade dos dados em cada módulo/tabela
-        - sqlalchemy.exc.IntegrityError e devolver a seguinte mensagem: “Já existe um atleta cadastrado com o cpf: x”
-        - status_code: 303
+        - sqlalchemy.exc.IntegrityError e devolver a seguinte mensagem: “Já existe um atleta cadastrado com o cpf: x”⌚
+        - status_code: 303⌚
     - Adicionar paginação utilizando a lib: fastapi-pagination
-        - limit e offset
+        - limit e offset⌚
+
+# DIO - Santander 2025 - Back-End com Python
+
+Agradecimentos à instrutora ["Nayanna Nara"](https://www.linkedin.com/in/nayannanara/), pela excelente orientação e dedicação durante o curso.
+Gostaria também de expressar minha gratidão à [DIO](https://www.dio.me/)(Digital Innovation One) e ao [Santander](https://www.santanderopenacademy.com/), pela oportunidade de participar deste programa, que me proporcionou aprendizado e crescimento na área de Back-End com Python.
+
 # Referências
 
 FastAPI: https://fastapi.tiangolo.com/

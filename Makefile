@@ -9,3 +9,6 @@ run-migrations:
 
 run-docker:
 	@docker-compose up -d
+
+down-docker:
+	@docker stop $(shell docker ps -q)
