@@ -11,4 +11,4 @@ run-docker:
 	@docker-compose up -d
 
 down-docker:
-	@docker stop $(docker ps -q)
+	@docker stop $(shell docker ps -q)
